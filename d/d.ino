@@ -3,7 +3,7 @@
 double Setpoint;
 double Input;
 double Output;
-PID myPID(&Input, &Output, &Setpoint, 0.4, 0, 0, DIRECT);
+PID myPID(&Input, &Output, &Setpoint, 0.4, 0, 0,DIRECT);
 
 
 // Pino analgico do potenciometro
@@ -21,7 +21,7 @@ int count;
 
 void setup() 
 {
-  Setpoint = 920;
+  Setpoint = 300;
   Input = analogRead(0);
   // Define que o servo esta ligado a porta 9
   Serial.begin(9600);      // open the serial port at 9600 bps:
@@ -30,6 +30,9 @@ void setup()
   count = 0;
   int number;
   myPID.SetMode(AUTOMATIC);
+
+  myPID.SetOutputLimits(-255, 255);
+
   
 }
 
@@ -37,19 +40,7 @@ void loop(){
   // Le o valor do potenciometro (valores entre 0 e 1023) 
   Input = analogRead(potpin);
   number = 0;
-  myPID.Compute();
-  Serial.print(Output);
-  if (Output< 0){
-    pin = 5;
-    Output = -Output;
-    }
-  else{
-    pin = 3;
-    }
-  analogWrite(pin, Output);
-  delay(20);
-  analogWrite(pin, 0); 
-
+  
   
   // send data only when you receive data:
   if (Serial.available() > 0) {
@@ -58,25 +49,29 @@ void loop(){
             buffer[count] = '\0';  // terminate the string
             count = 0;
             number = atoi(buffer);
-            if(number < 0){
-//              Serial.write('n');
-              pin = 5;
-              number = -number;
-            }
-            else{
-//              Serial.write('p');
-              pin = 3;
-            }
+            Serial.print(number);
+            Setpoint = map(number,-360,360,0,1023);
             
-            number = map(number, -360, 360, 0, 255);
-//            analogWrite(pin, number);
-//            delay(20);
-//            analogWrite(pin, 0); 
         }
         else if (count < sizeof buffer - 1) {
             buffer[count++] = c;
-        }
-}}
+        } 
+    }
+    myPID.Compute();
+    if(Output < 0){
+    pin = 5; 
+    }
+    else{
+      pin = 3;  
+    }
+//    Serial.print(Setpoint);
+    analogWrite(pin, Output);
+    delay(20);
+    analogWrite(pin, 0);
+    
+      
+
+}
 
 
 
